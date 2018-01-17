@@ -40,6 +40,7 @@ var Enemy = function(x, y, row, speed) {
     // 敌人的位置
     this.x = x;
     this.y = y;
+    // 敌人层数
     this.row = row;
     // 速度
     this.speed = Math.random() * (speed || 300);
@@ -71,12 +72,20 @@ Enemy.prototype.checkCollision = function(){
         for(var k in config.resetPlayer){
             player[k] = config.resetPlayer[k];
         }
+        if(player.hp === 1){
+            alert(`游戏结束！！`);
+            player.score = 0;
+            player.hp = 3;
+        }else{
+            player.hp--;
+        }
+        player.updateScore();
+        player.updateHp();
         // console.log(config.stringSplit(config.player_img_arr[config.randomNumBoth(0,config.player_img_arr.length - 1)]))
         player.sprite = config.stringSplit(config.player_img_arr[config.randomNumBoth(0,config.player_img_arr.length - 1)]);
-        console.error(`游戏结束！！enemy.x: ${this.x}, player.x: ${player.x}`);
-    }else{
+    }/*else{
         // console.log(`游戏进行中。。。enemy.x: ${this.x}, player.x: ${player.x}`)
-    }
+    }*/
 }
 // 现在实现你自己的玩家类
 // 这个类需要一个 update() 函数， render() 函数和一个 handleInput()函数
@@ -87,11 +96,36 @@ var Player = function(x, y, row){
     this.y = y;
     // 玩家图片
     this.sprite = config.stringSplit(config.player_img_arr[config.randomNumBoth(0,config.player_img_arr.length - 1)]);
+    // 玩家所在格子层数
     this.row = row;
+    // 玩家生命值
+    this.hp = 3;
+    // 玩家分数
+    this.score = 0;
 };
+// 重置玩家位置
+Player.prototype.reset = function(){
+    for(var k in config.resetPlayer){
+        this[k] = config.resetPlayer[k];
+    }
+    this.updateScore();
+    this.updateHp();
+}
 // 更新玩家地址
 Player.prototype.update = function(dt){
     
+};
+// 更新玩家分数
+Player.prototype.updateScore = function(){
+    document.getElementsByClassName('score')[0].innerHTML = this.score;
+};
+// 更新玩家生命值
+Player.prototype.updateHp = function(){
+    var text = '';
+    for(var i = 0; i < this.hp; i++){
+        text += '❤';
+    }
+    document.getElementsByClassName('hp')[0].innerHTML = text;
 };
 // 画出玩家位置
 Player.prototype.render = function(){
@@ -119,8 +153,11 @@ Player.prototype.handleInput = function(direction){
             break;
         case 'up': 
             if(this.y > config.min_y){
-                this.y -= 85.5; 
+                this.y -= 85.5;
                 this.row -= 1;
+            }else{
+                this.score += 100;
+                this.reset();
             }
             break;
         case 'down': 
@@ -143,7 +180,12 @@ image = {
     middle: 85.5 //171/2
 }
 */
-var allEnemies = [new Enemy(-101, 50, 1, 500)];
+var allEnemies = [];
+// 敌人数量默认为9，生成随机速度，随机层数的敌人
+for(var i = 0; i < 9; i++){
+    var math = config.randomNumBoth(1, 3);
+    allEnemies.push(new Enemy(-101, 50 + 85.5 * (math - 1), math, config.randomNumBoth(300, 1000)))
+}
 var player = new Player(202, 50 + 85.5 * 3, 4);
 
 // 这段代码监听游戏玩家的键盘点击事件并且代表将按键的关键数字送到 Player.handleInput()
