@@ -1,11 +1,13 @@
+var TILE_WIDTH = 101,// 代表一个单元格宽度
+    TILE_HEIGHT = 85.5;// 代表一个单元格高度 171/2
 var config = {
     // 容器宽度
     max: 606,
     // 图片参数
     img: {
         height: 171,
-        width: 101,
-        middle: 85.5, //171/2
+        width: TILE_WIDTH,
+        middle: TILE_HEIGHT, 
     },
     // 敌人与玩家可活动边界
     min_y: 50,
@@ -31,23 +33,38 @@ var config = {
         return Min + Math.round(Rand * Range); //四舍五入
     }
 };
-
+// 共有class
+var Character = function(x, y, sprite, row){
+    // 角色位置
+    this.x = x;
+    this.y = y;
+    // 角色图片
+    this.sprite = sprite;
+    // 角色层数
+    this.row = row;
+};
+// 共有函数render，用来画出角色
+Character.prototype.render = function(){
+    ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+};
 // 这是我们的玩家要躲避的敌人 
 var Enemy = function(x, y, row, speed) {
     // 要应用到每个敌人的实例的变量写在这里
     // 我们已经提供了一个来帮助你实现更多
     
-    // 敌人的位置
-    this.x = x;
-    this.y = y;
-    // 敌人层数
-    this.row = row;
+    
+    var enemy = Object.create(Enemy.prototype);
+    //调用 Character 设置 enemy 的属性
+    Character.call(enemy, x, y, config.stringSplit('enemy-bug'), row);
     // 速度
-    this.speed = Math.random() * (speed || 300);
+    enemy.speed = Math.random() * (speed || 300);
 
-    // 敌人的图片，用一个我们提供的工具函数来轻松的加载文件
-    this.sprite = config.stringSplit('enemy-bug');
+    return enemy;
 };
+
+// 继承 Character 类
+Enemy.prototype = Object.create(Character.prototype);
+Enemy.prototype.constructor = Enemy;
 
 // 此为游戏必须的函数，用来更新敌人的位置
 // 参数: dt ，表示时间间隙
@@ -62,13 +79,13 @@ Enemy.prototype.update = function(dt) {
     this.checkCollision();
 };
 
-// 此为游戏必须的函数，用来在屏幕上画出敌人，
+/*// 此为游戏必须的函数，用来在屏幕上画出敌人，
 Enemy.prototype.render = function() {
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
-};
+};*/
 // 敌人与玩家是否碰撞
 Enemy.prototype.checkCollision = function(){
-    if(this.row === player.row && this.x >= player.x && this.x <= player.x + config.img.width){
+    if(this.row === player.row && this.x + config.img.width > player.x && this.x < player.x + config.img.width){
         for(var k in config.resetPlayer){
             player[k] = config.resetPlayer[k];
         }
@@ -90,19 +107,30 @@ Enemy.prototype.checkCollision = function(){
 // 现在实现你自己的玩家类
 // 这个类需要一个 update() 函数， render() 函数和一个 handleInput()函数
 
+
+
 var Player = function(x, y, row){
-    // 玩家位置
-    this.x = x;
-    this.y = y;
-    // 玩家图片
-    this.sprite = config.stringSplit(config.player_img_arr[config.randomNumBoth(0,config.player_img_arr.length - 1)]);
-    // 玩家所在格子层数
-    this.row = row;
+    var player = Object.create(Player.prototype);
+    //调用 Character 设置 player 的属性
+    Character.call(
+        player, 
+        x, 
+        y, 
+        config.stringSplit(config.player_img_arr[config.randomNumBoth(0,config.player_img_arr.length - 1)]), // 随机角色皮肤
+        row
+    );
     // 玩家生命值
     this.hp = 3;
     // 玩家分数
     this.score = 0;
+
+    return player;
 };
+
+// 继承 Character 类
+Player.prototype = Object.create(Character.prototype);
+Player.prototype.constructor = Player;
+
 // 重置玩家位置
 Player.prototype.reset = function(){
     for(var k in config.resetPlayer){
@@ -127,10 +155,10 @@ Player.prototype.updateHp = function(){
     }
     document.getElementsByClassName('hp')[0].innerHTML = text;
 };
-// 画出玩家位置
+/*// 画出玩家位置
 Player.prototype.render = function(){
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
-};
+};*/
 /**
  * [handleInput 判断键盘操作方向并移动相应位置]
  * @param  {[字符串]} direction [根据事件监听获取到方向字符串]
@@ -143,17 +171,17 @@ Player.prototype.handleInput = function(direction){
     switch(direction){
         case 'left': 
             if(this.x > config.min_x){
-                this.x -= 101; 
+                this.x -= config.img.width; 
             }
             break;
         case 'right': 
             if(this.x < config.max_x){
-                this.x += 101; 
+                this.x += config.img.width; 
             }
             break;
         case 'up': 
             if(this.y > config.min_y){
-                this.y -= 85.5;
+                this.y -= config.img.height;
                 this.row -= 1;
             }else{
                 this.score += 100;
@@ -162,7 +190,7 @@ Player.prototype.handleInput = function(direction){
             break;
         case 'down': 
             if(this.y < config.max_y){
-                this.y += 85.5; 
+                this.y += config.img.height; 
                 this.row += 1;
             }
             break;
