@@ -120,9 +120,9 @@ var Player = function(x, y, row){
         row
     );
     // 玩家生命值
-    this.hp = 3;
+    player.hp = 3;
     // 玩家分数
-    this.score = 0;
+    player.score = 0;
 
     return player;
 };
